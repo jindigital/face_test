@@ -1,1 +1,8 @@
-{"name": "ai-filter-app", "version": "1.0.0", "dependencies": {"@google/generative-ai": "^0.1.0"}}
+{
+  "name": "ai-filter-app",
+  "version": "1.0.0",
+  "type": "module", 
+  "dependencies": {
+    "@google/generative-ai": "^0.1.0"
+  }
+}
