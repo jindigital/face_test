@@ -12,8 +12,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API Key가 Vercel 환경변수에 설정되지 않았습니다.' });
     }
 
-    // 외부 라이브러리 없이 Gemini REST API 직접 호출
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // 주소의 모델명을 gemini-1.5-flash 에서 가장 안정적인 gemini-pro 로 변경했습니다.
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
