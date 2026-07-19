@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 얼굴 필터 앱</title>
+    <style>
+        body { 
+            background-color: #f5f5dc; 
+            background-image: radial-gradient(#ffc0cb 1px, transparent 1px); 
+            background-size: 20px 20px; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+        }
+        #camera-container { width: 100%; max-width: 400px; height: 300px; border: 2px solid #ff69b4; margin-bottom: 20px; background: #fff; }
+        .controls { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>AI 얼굴 필터 생성기</h1>
+    <video id="camera-container" autoplay playsinline></video>
+    <div class="controls">
+        <input type="text" id="prompt" placeholder="필터로 만들 이미지 (예: 안경)">
+        <button onclick="generateFilter()">생성하기</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('camera-container');
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
+
+        async function generateFilter() {
+            const prompt = document.getElementById('prompt').value;
+            alert("API 연결 및 이미지 합성 로직을 추가하여 구현하세요.");
+        }
+    </script>
+</body>
+</html>
