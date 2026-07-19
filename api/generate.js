@@ -12,8 +12,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API Key가 Vercel 환경변수에 설정되지 않았습니다.' });
     }
 
-    // 주소의 모델명을 gemini-1.5-flash 에서 가장 안정적인 gemini-pro 로 변경했습니다.
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    // 베타(v1beta) 대신 가장 안정적인 정식 버전(v1) 주소를 사용하고, 모델은 gemini-1.5-flash를 지정합니다.
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,12 +29,10 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // API 응답이 실패한 경우
     if (!response.ok) {
       throw new Error(data.error?.message || 'API 호출 중 오류가 발생했습니다.');
     }
 
-    // 정상 응답에서 텍스트 결과만 추출하여 전달
     const text = data.candidates[0].content.parts[0].text;
     res.status(200).json({ message: text });
     
