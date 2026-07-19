@@ -31,9 +31,46 @@
         const video = document.getElementById('camera-container');
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
-        async function generateFilter() {
-            const prompt = document.getElementById('prompt').value;
-            alert("API 연결 및 이미지 합성 로직을 추가하여 구현하세요.");
+async function generateFilter() {
+    const prompt = document.getElementById('prompt').value;
+    const button = document.querySelector('button');
+
+    if (!prompt) {
+        alert("필터로 만들 이미지를 입력해 주세요!");
+        return;
+    }
+
+    try {
+        // 로딩 상태 표시
+        button.disabled = true;
+        button.innerText = "생성 중...";
+
+        // 서버(api/generate.js)로 데이터 전송
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        const data = await response.json();
+
+        // 결과 확인
+        if (response.ok) {
+            alert("서버 연결 성공! 응답: " + data.message);
+            // 향후 이 부분에 Gemini가 생성한 이미지를 화면에 합성하는 로직이 들어갑니다.
+        } else {
+            alert("오류가 발생했습니다: " + data.error);
+        }
+    } catch (error) {
+        alert("통신 중 오류가 발생했습니다: " + error.message);
+    } finally {
+        // 버튼 상태 원상복구
+        button.disabled = false;
+        button.innerText = "생성하기";
+    }
+}
         }
     </script>
 </body>
