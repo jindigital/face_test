@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     // Gemini API 호출
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     
     // 프롬프트 실행
     const result = await model.generateContent(`
