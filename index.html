@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 얼굴 필터 앱</title>
+    <title>AI 얼굴 필터 앱 & 게시판</title>
     <style>
         body { 
             background-color: #f5f5dc; 
@@ -16,62 +16,135 @@
             padding: 20px; 
         }
         #camera-container { width: 100%; max-width: 400px; height: 300px; border: 2px solid #ff69b4; margin-bottom: 20px; background: #fff; }
-        .controls { margin-top: 10px; }
+        .controls { margin-top: 10px; margin-bottom: 30px; }
+        
+        #board-container { width: 100%; max-width: 400px; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 10px; border: 2px solid #ffb6c1; }
+        #board-list { list-style: none; padding: 0; max-height: 150px; overflow-y: auto; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+        #board-list li { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #ccc; font-size: 14px; }
+        #post-input { width: calc(100% - 60px); padding: 5px; }
     </style>
 </head>
 <body>
     <h1>AI 얼굴 필터 생성기</h1>
+    
     <video id="camera-container" autoplay playsinline></video>
     <div class="controls">
         <input type="text" id="prompt" placeholder="필터로 만들 이미지 (예: 안경)">
         <button onclick="generateFilter()">생성하기</button>
     </div>
 
+    <div id="board-container">
+        <h2>실시간 게시판</h2>
+        <div>
+            <input type="text" id="post-input" placeholder="글을 남겨주세요">
+            <button id="add-post-btn">등록</button>
+        </div>
+        <ul id="board-list"></ul>
+    </div>
+
     <script>
         const video = document.getElementById('camera-container');
-        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s).catch(e => console.log("카메라 권한 오류:", e));
 
-async function generateFilter() {
-    const prompt = document.getElementById('prompt').value;
-    const button = document.querySelector('button');
+        async function generateFilter() {
+            const prompt = document.getElementById('prompt').value;
+            const button = document.querySelector('.controls button');
 
-    if (!prompt) {
-        alert("필터로 만들 이미지를 입력해 주세요!");
-        return;
-    }
+            if (!prompt) {
+                alert("필터로 만들 이미지를 입력해 주세요!");
+                return;
+            }
 
-    try {
-        // 로딩 상태 표시
-        button.disabled = true;
-        button.innerText = "생성 중...";
+            try {
+                button.disabled = true;
+                button.innerText = "생성 중...";
 
-        // 서버(api/generate.js)로 데이터 전송
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: prompt })
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("서버 연결 성공! 응답: " + data.message);
+                } else {
+                    alert("오류가 발생했습니다: " + data.error);
+                }
+            } catch (error) {
+                alert("통신 중 오류가 발생했습니다: " + error.message);
+            } finally {
+                button.disabled = false;
+                button.innerText = "생성하기";
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // 입력해주신 설정값 적용
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQvH6bBbsd4inrHPQbPnFPL2Dxh9efCX8",
+            authDomain: "face-test-b600c.firebaseapp.com",
+            projectId: "face-test-b600c",
+            storageBucket: "face-test-b600c.firebasestorage.app",
+            messagingSenderId: "372083381919",
+            appId: "1:372083381919:web:30bc07a427d810ee86b4aa",
+            measurementId: "G-QD26YD1ELK"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const postInput = document.getElementById('post-input');
+        const addPostBtn = document.getElementById('add-post-btn');
+        const boardList = document.getElementById('board-list');
+
+        addPostBtn.addEventListener('click', async () => {
+            const text = postInput.value.trim();
+            if (!text) return alert("글을 입력해주세요.");
+            
+            try {
+                await addDoc(collection(db, "posts"), {
+                    content: text,
+                    createdAt: serverTimestamp() 
+                });
+                postInput.value = ""; 
+                loadPosts(); 
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("글 등록 중 오류가 발생했습니다. Firestore 데이터베이스 규칙(Rules) 설정을 확인해주세요.");
+            }
         });
 
-        const data = await response.json();
+        async function loadPosts() {
+            boardList.innerHTML = "<li>불러오는 중...</li>";
+            try {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                boardList.innerHTML = ""; 
+                
+                if (querySnapshot.empty) {
+                    boardList.innerHTML = "<li>아직 작성된 글이 없습니다.</li>";
+                    return;
+                }
 
-        // 결과 확인
-        if (response.ok) {
-            alert("서버 연결 성공! 응답: " + data.message);
-            // 향후 이 부분에 Gemini가 생성한 이미지를 화면에 합성하는 로직이 들어갑니다.
-        } else {
-            alert("오류가 발생했습니다: " + data.error);
+                querySnapshot.forEach((doc) => {
+                    const li = document.createElement("li");
+                    li.textContent = doc.data().content;
+                    boardList.appendChild(li);
+                });
+            } catch (e) {
+                console.error("Error getting documents: ", e);
+                boardList.innerHTML = "<li>글을 불러오지 못했습니다. Firebase 설정이나 규칙을 확인해주세요.</li>";
+            }
         }
-    } catch (error) {
-        alert("통신 중 오류가 발생했습니다: " + error.message);
-    } finally {
-        // 버튼 상태 원상복구
-        button.disabled = false;
-        button.innerText = "생성하기";
-    }
-}
-        }
+
+        loadPosts();
     </script>
 </body>
 </html>
